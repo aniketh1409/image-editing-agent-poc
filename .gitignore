@@ -1,0 +1,45 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache/build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Jupyter / notebook checkpoints
+.ipynb_checkpoints/
+
+# Local environment/config
+.env
+.env.*
+!.env.example
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# ML experiment outputs and large model/data artifacts
+data/
+datasets/
+outputs/
+runs/
+checkpoints/
+wandb/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx

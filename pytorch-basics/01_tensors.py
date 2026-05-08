@@ -50,22 +50,23 @@ image = torch.zeros((3, 4, 5))
 image[0, :, :] = 1.0  # red channel
 image[1, 1:3, 2:4] = 0.5  # green-ish patch in the middle
 
-show("single image: C x H x W", image)
+show("single image: C x H x W", image) #prints out the three grids -> for r,g,b with the intensity/activation values, and the shape of the tensor
 
 # A batch of images usually adds a leading batch dimension:
 #     batch, channels, height, width
 
-batch = torch.stack([image, torch.ones_like(image) * 0.25])
+batch = torch.stack([image, torch.ones_like(image) * 0.25]) #batch of 2 images: one is the original image, the other retains the same "shape" but has all values one multiplied by 0.25 (Q: would this be a gray image with 25% intensity? Ans: yes, since all channels have the same value, it would be a shade of gray)
 show("batch of images: B x C x H x W", batch)
 
 # Shape reading drill:
 # batch[0]        -> first image, shape C x H x W
 # batch[0, 1]     -> first image's green channel, shape H x W
 # batch[:, :, 0]  -> top row from every image/channel, shape B x C x W
+# ":" means all in that dimension. It is only needed to refer to all elements in a dimension if a dimension that comes after it needs specific slicing. Otherwise, you can just omit it and get the same result.
 
-show("first image", batch[0])
-show("green channel of first image", batch[0, 1])
-show("top row across batch", batch[:, :, 0])
+show("first image", batch[0]) #batch[0] --> first image with all channels, rows and columns
+show("green channel of first image", batch[0, 1]) #first image, green channel, all rows and columns (no slicing used so we get the whole channel)
+show("top row across batch", batch[:, :, 0]) #all images, all channels, top row (row 0), all columns (no slicing used so we get the whole row) -> shape B x C x W
 
 # ---------------------------------------------------------------------------
 # 3. Masks for object removal
@@ -75,7 +76,7 @@ show("top row across batch", batch[:, :, 0])
 
 mask = torch.zeros((1, 4, 5))
 mask[:, 1:3, 2:4] = 1.0
-masked_image = image * (1 - mask)
+masked_image = image * (1 - mask) #image has 3 channels
 
 show("mask: 1 means edit this region", mask)
 show("image with masked region removed", masked_image)
