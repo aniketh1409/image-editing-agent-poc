@@ -92,7 +92,7 @@ mean_per_channel = image.mean(dim=(1, 2), keepdim=True)
 centered_image = image - mean_per_channel
 
 show("mean per channel: C x 1 x 1", mean_per_channel)
-show("centered image", centered_image)
+show("centered image", centered_image) #subtract red mean from red channel, green mean from green channel, blue mean from blue channel, for every pixel in the image (no slicing used so we get the whole image with all channels, rows and columns)
 
 # ---------------------------------------------------------------------------
 # 5. Matrix multiplication: the heart of neural network layers
