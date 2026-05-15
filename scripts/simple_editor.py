@@ -114,10 +114,18 @@ def parse_args():
 
     return parser.parse_args()
 
+def validate_args(args):
+    if not args.image.exists():
+        raise FileNotFoundError(f"Image {args.image} not found")
+    if not args.mask.exists():
+        raise FileNotFoundError(f"Mask {args.mask} does not exist")
+
+
 def main():
 
     args = parse_args()
-
+    validate_args(args)
+    
     image_tensor = load_rgb_image(args.image)
     mask_tensor = load_mask(args.mask, image_tensor.shape[-2:])
 
