@@ -231,15 +231,3 @@
     - backward pass: autograd computes gradients
     - optimizer step: weights are updated
 
-
-### Next Step
-- Next practical file should be `02_training_loop.py`
-- Goal: train a tiny model to learn `y = 3x + 2`
-- This will connect:
-    - tensors
-    - matrix multiplication
-    - autograd
-    - loss
-    - optimizer
-    - actual learning
-
