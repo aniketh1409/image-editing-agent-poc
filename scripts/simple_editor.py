@@ -40,6 +40,20 @@ def fill_black(image_tensor, mask_tensor):
     return edited_tensor
 
 
+def fill_average(image_tensor, mask_tensor):
+    keep_region = 1 - mask_tensor
+
+    sum_per_channel = (image_tensor * keep_region).sum(dim=(1, 2), keepdim = True)
+    count_per_channel = keep_region.sum(dim = (1, 2), keepdim = True)
+
+    average_color = sum_per_channel / count_per_channel
+
+    edited_tensor = image_tensor * keep_region + average_color * mask_tensor
+
+    return edited_tensor
+
+
+
 def save_tensor_image(tensor, path):
     path.parent.mkdir(parents=True, exist_ok=True)
     tensor = tensor.clamp(0, 1) #forces the values to be in [0, 1] (if < 0 -> 0 if > 1 -> 1)
@@ -52,12 +66,12 @@ def main():
     #gonna hardcode the path for now
     image_path = Path("images/sample.jpg")
     mask_path = Path("images/mask.jpg")
-    output_path = Path("outputs/practice_black.jpg")
+    output_path = Path("outputs/practice_average.jpg")
 
     image_tensor = load_rgb_image(image_path)
     mask_tensor = load_mask(mask_path, image_tensor.shape[-2:])
 
-    edited_tensor = fill_black(image_tensor, mask_tensor)
+    edited_tensor = fill_average(image_tensor, mask_tensor)
 
     save_tensor_image(edited_tensor, output_path)
 
