@@ -4,7 +4,9 @@ import torch
 from PIL import Image
 from torchvision import transforms
 
-image_path = Path(f"images/sample.jpg")
+FOUNDATION_DIR = Path(__file__).resolve().parents[1]
+
+image_path = FOUNDATION_DIR / "images" / "sample.jpg"
 image = Image.open(image_path).convert("RGB")
 
 print(f"PIL Image size: {image.size}")
@@ -34,7 +36,7 @@ print(f"Mask shape: {mask.shape}")
 print(f"Masked tensor shape: {masked_tensor.shape}")
 print(f"mask min/max", mask.min().item(), mask.max().item())
 
-output_dir = Path("outputs")
+output_dir = FOUNDATION_DIR / "outputs"
 output_dir.mkdir(exist_ok= True)
 
 to_pil = transforms.ToPILImage()

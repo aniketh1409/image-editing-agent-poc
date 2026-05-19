@@ -3,8 +3,10 @@ from pathlib import Path
 from PIL import Image
 from torchvision import transforms
 
-image_path = Path("images/sample.jpg")
-output_dir = Path("outputs/augmentations")
+FOUNDATION_DIR = Path(__file__).resolve().parents[1]
+
+image_path = FOUNDATION_DIR / "images" / "sample.jpg"
+output_dir = FOUNDATION_DIR / "outputs" / "augmentations"
 output_dir.mkdir(parents=True, exist_ok=True)
 
 image = Image.open(image_path).convert("RGB")

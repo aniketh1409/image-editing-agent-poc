@@ -8,7 +8,7 @@ import argparse
 """Simple image editing POC.
 
 Usage:
-    .venv\\Scripts\\python.exe scripts\\simple_editor.py --image images\\sample.jpg --mask outputs\\mask.jpg --mode blur --output outputs\\simple_blur.jpg
+    .venv\\Scripts\\python.exe foundation\\scripts\\simple_editor.py --image foundation\\images\\sample.jpg --mask foundation\\outputs\\mask.jpg --mode blur --output foundation\\outputs\\simple_blur.jpg
 
 This is intentionally classical/non-generative. The goal is to make the
 image + mask + edit-mode pipeline work before replacing the fill step with a
@@ -138,6 +138,5 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 
 
