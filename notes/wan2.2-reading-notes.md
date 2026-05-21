@@ -94,3 +94,11 @@ A person opens a refrigerator door while standing in a kitchen, hand on the hand
 - Download TI2V-5B first.
 - Run one text-to-video prompt related to articulated objects.
 - Save prompt, command, output path, GPU type, runtime, and visible failures.
+
+## My Takeaway
+
+Wan2.2 is a strong base video generation model family, not specifically an articulated-object editing system. The most practical starting point is TI2V-5B because it supports text/image-to-video and has lower GPU requirements. For my project, Wan2.2 is useful as a baseline to test failures in human-object contact, occlusion, articulated state, and temporal consistency.
+
+## Direction
+
+The goal is to study and improve video editing for human-articulated-object interactions, where edits must preserve spatial relationships such as contact, occlusion, object part motion, and temporal consistency.

@@ -40,6 +40,13 @@ Example:
 - `foundation/pytorch-basics/02_training_loop.py`: first PyTorch training loop
 - `foundation/pytorch-basics/03_real_image_tensors.py`: loading real images, masks, fills, blending
 - `foundation/pytorch-basics/04_augmentations.py`: basic image augmentations
+- `foundation/pytorch-basics/05_video_tensors.py`: fake video tensors, moving masks, frame differences, and saved edited frames
+
+## Notes
+
+- `notes/research-map.md`: public-safe research map
+- `notes/wan2.2-reading-notes.md`: Wan2.2 notes
+- `notes/vace-reading-notes.md`: VACE notes
 
 ## Direction
 
