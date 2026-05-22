@@ -1,9 +1,11 @@
 from pathlib import Path
 import csv
+import json
 from math import sqrt
 from PIL import Image, ImageDraw
 
 OUTPUT_DIR = Path("prototypes/contact-eval/outputs")
+EXAMPLES_DIR = Path("prototypes/contact-eval/examples")
 
 def make_box(row_start, row_end, col_start, col_end):
     return {
@@ -88,25 +90,45 @@ def box_edge_distance(box_a, box_b):
     distance = sqrt(horizontal_gap ** 2 + vertical_gap ** 2)
     return distance
 
-def run_case(case_name, break_contact):
-    num_frames = 8
-    edge_threshold = 8
 
+def load_boxes_json(path):
+    with path.open() as file:
+        data = json.load(file)
+
+    return data["frames"]
+
+
+def write_metrics_csv(csv_path, rows):
+    with csv_path.open("w", newline="") as file:
+        fieldnames = [
+            "frame_idx",
+            "hand_center_row",
+            "hand_center_col",
+            "object_center_row",
+            "object_center_col",
+            "center_distance",
+            "edge_distance",
+            "edge_threshold",
+            "contact_ok",
+        ]
+
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def run_case(case_name, boxes_path):
+    edge_threshold = 8
     output_dir = OUTPUT_DIR / case_name
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    frames = load_boxes_json(boxes_path)
     rows = []
 
-    for frame_idx in range(num_frames):
-        object_col_start = 60 + frame_idx * 5
-        object_box = make_box(45, 65, object_col_start, object_col_start + 25)
-
-        if break_contact and frame_idx >= 5:
-            hand_col_start = object_col_start - 25 - (frame_idx - 4) * 12
-        else:
-            hand_col_start = object_col_start - 25
-
-        hand_box = make_box(45, 65, hand_col_start, hand_col_start + 20)
+    for frame in frames:
+        frame_idx = frame["frame_idx"]
+        hand_box = frame["hand_box"]
+        object_box = frame["object_box"]
 
         center_dist = center_distance(hand_box, object_box)
         edge_dist = box_edge_distance(hand_box, object_box)
@@ -133,30 +155,13 @@ def run_case(case_name, break_contact):
         print(case_name, frame_idx, "center:", center_dist, "edge:", edge_dist, ok)
 
     csv_path = output_dir / "metrics.csv"
-
-    with csv_path.open("w", newline="") as file:
-        fieldnames = [
-            "frame_idx",
-            "hand_center_row",
-            "hand_center_col",
-            "object_center_row",
-            "object_center_col",
-            "center_distance",
-            "edge_distance",
-            "edge_threshold",
-            "contact_ok",
-        ]
-
-        writer = csv.DictWriter(file, fieldnames=fieldnames)
-        writer.writeheader()
-        writer.writerows(rows)
-
+    write_metrics_csv(csv_path, rows)
     print("saved metrics:", csv_path)
 
 
 def main():
-    run_case("good", break_contact=False)
-    run_case("broken",  break_contact=True)
+    run_case("good", EXAMPLES_DIR / "good_boxes.json")
+    run_case("broken", EXAMPLES_DIR / "broken_boxes.json")
 
 if __name__ == "__main__":
     main()
