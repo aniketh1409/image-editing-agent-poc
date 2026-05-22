@@ -90,7 +90,7 @@ def box_edge_distance(box_a, box_b):
 
 def run_case(case_name, break_contact):
     num_frames = 8
-    threshold = 35
+    edge_threshold = 8
 
     output_dir = OUTPUT_DIR / case_name
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -108,8 +108,9 @@ def run_case(case_name, break_contact):
 
         hand_box = make_box(45, 65, hand_col_start, hand_col_start + 20)
 
-        distance = center_distance(hand_box, object_box)
-        ok = contact_ok(distance, threshold)
+        center_dist = center_distance(hand_box, object_box)
+        edge_dist = box_edge_distance(hand_box, object_box)
+        ok = contact_ok(edge_dist, edge_threshold)
 
         output_path = output_dir / f"frame_{frame_idx:02d}.jpg"
         draw_frame(output_path, hand_box, object_box, ok)
@@ -123,12 +124,13 @@ def run_case(case_name, break_contact):
             "hand_center_col": hand_col,
             "object_center_row": object_row,
             "object_center_col": object_col,
-            "distance": distance,
-            "threshold": threshold,
+            "center_distance": center_dist,
+            "edge_distance": edge_dist,
+            "edge_threshold": edge_threshold,
             "contact_ok": ok,
         })
 
-        print(case_name, frame_idx, distance, ok)
+        print(case_name, frame_idx, "center:", center_dist, "edge:", edge_dist, ok)
 
     csv_path = output_dir / "metrics.csv"
 
@@ -139,8 +141,9 @@ def run_case(case_name, break_contact):
             "hand_center_col",
             "object_center_row",
             "object_center_col",
-            "distance",
-            "threshold",
+            "center_distance",
+            "edge_distance",
+            "edge_threshold",
             "contact_ok",
         ]
 
