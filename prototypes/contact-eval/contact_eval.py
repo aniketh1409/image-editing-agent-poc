@@ -55,19 +55,105 @@ def draw_frame(output_path, hand_box, object_box, contact_ok, image_size = (160,
     output_path.parent.mkdir(parents=True, exist_ok=True)
     image.save(output_path)
 
-    #TODO: pass/fail check
-    pass
 
 def contact_ok(distance, threshold):
-    pass
+    return distance < threshold
+
+
+def box_edge_distance(box_a, box_b):
+    a_top = box_a["row_start"]
+    a_bottom = box_a["row_end"]
+    a_left = box_a["col_start"]
+    a_right = box_a["col_end"]
+
+    b_top = box_b["row_start"]
+    b_bottom = box_b["row_end"]
+    b_left = box_b["col_start"]
+    b_right = box_b["col_end"]
+
+    if a_right < b_left:
+        horizontal_gap = b_left - a_right
+    elif b_right < a_left:
+        horizontal_gap = a_left - b_right
+    else:
+        horizontal_gap = 0
+
+    if a_bottom < b_top:
+        vertical_gap = b_top - a_bottom
+    elif b_bottom < a_top:
+        vertical_gap = a_top - b_bottom
+    else:
+        vertical_gap = 0
+
+    distance = sqrt(horizontal_gap ** 2 + vertical_gap ** 2)
+    return distance
+
+def run_case(case_name, break_contact):
+    num_frames = 8
+    threshold = 35
+
+    output_dir = OUTPUT_DIR / case_name
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    rows = []
+
+    for frame_idx in range(num_frames):
+        object_col_start = 60 + frame_idx * 5
+        object_box = make_box(45, 65, object_col_start, object_col_start + 25)
+
+        if break_contact and frame_idx >= 5:
+            hand_col_start = object_col_start - 25 - (frame_idx - 4) * 12
+        else:
+            hand_col_start = object_col_start - 25
+
+        hand_box = make_box(45, 65, hand_col_start, hand_col_start + 20)
+
+        distance = center_distance(hand_box, object_box)
+        ok = contact_ok(distance, threshold)
+
+        output_path = output_dir / f"frame_{frame_idx:02d}.jpg"
+        draw_frame(output_path, hand_box, object_box, ok)
+
+        hand_row, hand_col = box_center(hand_box)
+        object_row, object_col = box_center(object_box)
+
+        rows.append({
+            "frame_idx": frame_idx,
+            "hand_center_row": hand_row,
+            "hand_center_col": hand_col,
+            "object_center_row": object_row,
+            "object_center_col": object_col,
+            "distance": distance,
+            "threshold": threshold,
+            "contact_ok": ok,
+        })
+
+        print(case_name, frame_idx, distance, ok)
+
+    csv_path = output_dir / "metrics.csv"
+
+    with csv_path.open("w", newline="") as file:
+        fieldnames = [
+            "frame_idx",
+            "hand_center_row",
+            "hand_center_col",
+            "object_center_row",
+            "object_center_col",
+            "distance",
+            "threshold",
+            "contact_ok",
+        ]
+
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    print("saved metrics:", csv_path)
+
 
 def main():
-    #TODO: generate a few fake boxes over time
-    #TODO: compute contact distance for each frame
-    #TODO: save the annotated frames
-    #TODO: save metric data (CSV)
-    pass
-
+    run_case("good", break_contact=False)
+    run_case("broken",  break_contact=True)
 
 if __name__ == "__main__":
     main()

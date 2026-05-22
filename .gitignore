@@ -35,6 +35,7 @@ Thumbs.db
 data/
 datasets/
 outputs/
+**/outputs/
 runs/
 checkpoints/
 wandb/
@@ -46,4 +47,3 @@ wandb/
 
 # Local planning notes
 notes/june-10-demo-plan.md
-
