@@ -27,10 +27,21 @@ def center_distance(box_a, box_b):
     distance = sqrt((row_a - row_b) ** 2 + (col_a - col_b) ** 2)
     return distance
 
-def draw_frame(output_path, hand_box, object_box, contact_ok, image_size = (160, 120)): #explicit rn
+def draw_frame(
+    output_path,
+    hand_box,
+    object_box,
+    contact_ok,
+    input_frame_path=None,
+    image_size=(160, 120),
+):
     width, height = image_size
 
-    image = Image.new("RGB", (width, height), color = (245, 245, 245))
+    if input_frame_path is not None and input_frame_path.exists():
+        image = Image.open(input_frame_path).convert("RGB")
+    else:
+        image = Image.new("RGB", (width, height), color = (245, 245, 245))
+
     draw = ImageDraw.Draw(image)
 
     object_rect = [
@@ -120,6 +131,7 @@ def write_metrics_csv(csv_path, rows):
 def run_case(case_name, boxes_path):
     edge_threshold = 8
     output_dir = OUTPUT_DIR / case_name
+    input_frames_dir = EXAMPLES_DIR / f"{case_name}_frames"
     output_dir.mkdir(parents=True, exist_ok=True)
 
     frames = load_boxes_json(boxes_path)
@@ -135,7 +147,8 @@ def run_case(case_name, boxes_path):
         ok = contact_ok(edge_dist, edge_threshold)
 
         output_path = output_dir / f"frame_{frame_idx:02d}.jpg"
-        draw_frame(output_path, hand_box, object_box, ok)
+        input_frame_path = input_frames_dir / f"frame_{frame_idx:02d}.jpg"
+        draw_frame(output_path, hand_box, object_box, ok, input_frame_path)
 
         hand_row, hand_col = box_center(hand_box)
         object_row, object_col = box_center(object_box)
@@ -165,3 +178,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
