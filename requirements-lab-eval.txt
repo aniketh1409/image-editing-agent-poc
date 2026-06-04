@@ -1,0 +1,15 @@
+# Dependencies for the local annotation + server RTSS evaluation workflow.
+#
+# These support the copied private lab scripts in lab_eval_tools/:
+# - local_window_mask_annotator_v2.py
+# - server_manual_window_rtss.py
+#
+# Note:
+# - Use opencv-python for the local GUI annotator because it needs cv2 windows.
+# - On a headless server, opencv-python-headless may be preferable, but do not
+#   install both in the same environment.
+
+numpy
+opencv-python
+tqdm
+torch

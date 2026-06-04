@@ -39,6 +39,12 @@ outputs/
 runs/
 checkpoints/
 wandb/
+cases/
+case_*/
+*.mp4
+*.mov
+*.avi
+*.mkv
 *.pt
 *.pth
 *.ckpt
@@ -50,3 +56,6 @@ notes/june-10-demo-plan.md
 
 # Generated contact-eval example frames
 prototypes/contact-eval/examples/*_frames/
+
+# Private lab evaluation tools copied locally for experimentation
+lab_eval_tools/
