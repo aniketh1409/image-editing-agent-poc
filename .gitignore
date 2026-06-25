@@ -57,5 +57,10 @@ notes/june-10-demo-plan.md
 # Generated contact-eval example frames
 prototypes/contact-eval/examples/*_frames/
 
+# Local manual articulation annotations. Keep only the public toy/example JSON.
+prototypes/articulation_eval/examples/*keypoints.json
+prototypes/articulation_eval/examples/*kepypoints.json
+!prototypes/articulation_eval/examples/*.example.json
+
 # Private lab evaluation tools copied locally for experimentation
 lab_eval_tools/

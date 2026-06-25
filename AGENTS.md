@@ -42,7 +42,11 @@ Current implemented files:
 - `prototypes/contact-eval/contact_eval.py`: early reusable contact evaluator. It loads hand/object boxes from JSON, optionally overlays them on frame folders, computes center and edge distance, uses edge distance for contact pass/fail, and writes per-frame CSV metrics. Output folders are ignored by git.
 - `prototypes/contact-eval/generate_example_frames.py`: helper that generates simple good/broken example frame folders from the JSON annotations for testing frame-folder support. Generated frame folders are ignored by git.
 - `prototypes/articulation_eval/README.md`: scaffold notes for moving from windowed RTSS/local rigidity to semantic keypoint articulation metrics.
-- `prototypes/articulation_eval/keypoint_articulation_eval.py`: placeholder entry point for the upcoming keypoint-based ArticulationEval prototype.
+- `prototypes/articulation_eval/keypoint_articulation_eval.py`: runnable semantic keypoint evaluator. It reads manual keypoint JSON and writes frame-level CSV plus summary JSON for visibility, pivot drift, front-tip motion, radius consistency, pairwise lid rigidity, and approximate angle change.
+- `prototypes/articulation_eval/manual_keypoint_annotator.py`: OpenCV click annotator for marking semantic 2D keypoints on selected video frames before later 2D/3D articulation scoring.
+- `prototypes/articulation_eval/examples/toilet_lid_keypoints.example.json`: toy public-safe example for testing the keypoint evaluator without private video annotations.
+- `prototypes/articulation_eval/presentation_outline.md`: concise meeting story for RTSS baseline -> semantic keypoint ArticulationEval.
+- `prototypes/articulation_eval/synthetic_articulation_sandbox.py`: dependency-light synthetic keypoint sandbox for validating the unified articulation score idea on controlled hinge, slider, and rotation trajectories before using noisy real videos.
 - `requirements-lab-eval.txt`: public dependency list for locally copied private lab evaluation scripts; `lab_eval_tools/` itself is ignored and should not be committed.
 
 Current public notes:
@@ -133,6 +137,11 @@ Current RTSS decision protocol:
 - Annotated videos written with OpenCV `mp4v` may not play in some viewers; prefer H.264 (`avc1`/`H264`) or transcode existing outputs with ffmpeg/libx264 before copying/viewing. Local `lab_eval_tools/server_manual_window_rtss.py` was patched to try H.264 first and fall back to `mp4v`.
 - Hang guidance/interpretation: image and video editing should be treated as interrelated, with image/frame-level reasoning tools such as DeepEyes potentially helping fine-tune or guide an RL/agent model. This does not replace the ArticulationEval direction; it suggests the evaluator can become reward/feedback for an agent that reasons over frames, predicts/localizes keypoints or masks, edits, and then scores results.
 - Current articulation-eval framing: RTSS/windowed CoTracker results are useful as local rigidity/trackability evidence, but not sufficient as a whole-video articulation metric because articulated objects self-occlude and reveal new surfaces. A stronger direction is keypoint/part-based evaluation: choose semantically meaningful points on the lid/part, predict where they should move under the intended articulation, compare against tracked/generated positions, and use motion-type-specific metrics such as hinge rotation consistency, sliding/prismatic consistency, attachment consistency, rigidity/deformation, and background leakage.
+- Hang's "3 axes/origin" framing can guide the next evaluator: represent a moving articulated part with a local coordinate frame anchored at an origin, such as the hinge. Track semantic keypoints relative to that origin/frame over time. For hinge motion, the key check is whether points preserve distances to the hinge axis and move along rotation-like arcs; for drawer/sliding motion, points should move mostly along one translation axis while preserving same-part distances.
+- Immediate ArticulationEval v1 target: use the same `case_toilet1_0` toilet-lid video and manually establish semantic keypoints on a few frames first, rather than solving automatic keypoint detection. Start with hinge points and lid front/edge points, then compute 2D hinge metrics before adding tracking or DeepEyes-assisted localization.
+- Keypoint evaluator assumption: begin with manually clicked 2D keypoints as the observed generated-video points. Depth-based lifting can be added later as pseudo-3D, but generated videos may have inconsistent monocular depth, so depth should be treated as an optional approximation, not ground truth. The evaluator should distinguish observed keypoints from expected keypoints predicted by a simple articulation model, e.g. hinge rotation preserving distances to a hinge axis.
+- Manual marking workflow: use `prototypes/articulation_eval/manual_keypoint_annotator.py` on `case_toilet1_0/input.mp4`. Current default keypoints are `left_pivot`, `right_pivot`, `lid_back_center`, `lid_midpoint`, and `lid_front_tip`, with frames such as `0,52,60,70,80`. The evaluator derives `back_pivot` from the midpoint of the two pivots when visible. Save to `prototypes/articulation_eval/examples/toilet_lid_keypoints.json`; the local video/case remains ignored by git.
+- ArticulationEval v1 now runs on a toy example and outputs metrics under ignored `prototypes/articulation_eval/outputs/`. Verified command: `python prototypes/articulation_eval/keypoint_articulation_eval.py --keypoints_json prototypes/articulation_eval/examples/toilet_lid_keypoints.example.json --out_csv prototypes/articulation_eval/outputs/toy_toilet_lid_metrics.csv --summary_json prototypes/articulation_eval/outputs/toy_toilet_lid_summary.json`.
 - Lab evaluation script interpretation: `/mnt/SSD4T_1/aniketh/infiniKin_Evaluation` contains several exploratory scripts. `depth_aware_rigid_motion_consistency01.py` is an older/no-mask automatic LK+MiDaS D-RMC/HRC prototype; it auto-selects moving points and can mix object/background/shadows. `server_drmc_cotracker_from_mask.py` and `server_drmc_cotracker_rtss_vda.py` appear to be more advanced mask/CoTracker/depth variants. The current public repo intentionally keeps only the two most relevant local pieces: `local_window_mask_annotator_v2.py` and `server_manual_window_rtss.py`. For the next project step, build a clean ArticulationEval/keypoint evaluator in the repo rather than copying every lab exploratory script.
 
 Rorqual/Alliance status:
@@ -153,3 +162,107 @@ Tutoring style:
 - Prefer hands-on scripts under `foundation/pytorch-basics/` before larger prototypes.
 - Use CPU-friendly examples unless the environment changes.
 - Keep public notes concise and safe for GitHub.
+
+June 9 presentation state:
+
+- Current talk framing: ArticulationEval is a verification/filtering prototype for generated human-articulated-object interaction videos, not a generator. It turns qualitative failures like "the lid looks rubbery" into measurable signals that can be used for dataset filtering, candidate ranking, self-verification, or future RL/agent reward.
+- Professor Cheng reportedly expects vivid/visual/product-like results. Best presentation posture: show a mini verifier product rather than just a report:
+  1. RTSS baseline videos/table.
+  2. RTSS limitation: 120 generic surface points work only on visibility-consistent patches; points disappear when the toilet lid surface changes from outer to inner surface or visible area changes.
+  3. Semantic keypoint annotation frames.
+  4. ArticulationEval metrics/plots.
+  5. Cross-model comparison on toilet `1_0`.
+  6. Pipeline framing: generated candidates -> visual/keypoint localization -> ArticulationEval -> PASS/REVIEW/FAIL -> dataset filtering/refinement.
+- RTSS workflow from server README: local `local_window_mask_annotator_v2.py` defines visibility-consistent windows and masks, case is transferred to server, `server_manual_window_rtss.py` samples/tracks 120 points per window, then `manual_window_scores.csv`, `manual_window_summary.csv`, and `annotated_*.mp4` are inspected. Important rule: inspect annotated tracking videos before trusting CSV metrics.
+- RTSS result table for `case_toilet1_0`:
+  - `window_00`, frames `0-38`: `endpoint_visible_points=113`, `rtss2d_action_p90=0.022529`, mostly still/sanity window.
+  - `window_01`, frames `39-46`: `endpoint_visible_points=64`, `rtss2d_action_p90=0.070457`, valid early motion.
+  - `window_02`, frames `47-80`: `endpoint_visible_points=0`, endpoint RTSS NaN because surface visibility changes during opening.
+- Semantic keypoint setup evolved to current keypoints: `left_pivot`, `right_pivot`, `lid_back_center`, `lid_midpoint`, `lid_front_tip`. The evaluator derives `back_pivot` as midpoint of visible left/right pivots. Frames should be motion-phase normalized when videos differ in length.
+- Current evaluator files:
+  - `prototypes/articulation_eval/manual_keypoint_annotator.py`: click annotator.
+  - `prototypes/articulation_eval/keypoint_articulation_eval.py`: computes metrics and visual outputs.
+  - `prototypes/articulation_eval/make_presentation_assets.py`: SVG plots and result summary.
+  - `prototypes/articulation_eval/make_concept_diagrams.py`: PhysX-Omni metric map and DeepEyes/ArticulationEval loop diagrams.
+  - `prototypes/articulation_eval/build_demo_report.py`: local static HTML report.
+  - `prototypes/articulation_eval/make_eval_overlay_video.py`: full-video overlay demo using interpolated keypoints; it is a visual demo, not a tracking algorithm.
+- Current metrics and interpretation:
+  - Base WAN / original toilet: visibility `0.92`, max pivot drift `6.96 px`, max lid-tip motion `312.87 px`, mean radius error `1.13`, mean rigidity error `0.61`, angle change `98.55 deg`. Interpretation: lid opens and pivot is fairly stable, but high radius/rigidity errors suggest non-rigid or non-hinge-consistent generated motion.
+  - WAN_Finetune: visibility `0.92`, max pivot drift `7.21 px`, max lid-tip motion `275.94 px`, mean radius error `0.50`, mean rigidity error `0.23`, angle change `109.73 deg`. Interpretation: finetuning improves shape preservation and hinge-like rigidity compared with base WAN.
+  - VACE: visibility `0.80`, max pivot drift `5.50 px`, max lid-tip motion `294.26 px`, mean radius error `1.03`, mean rigidity error `0.15`, angle change `112.50 deg`. Interpretation: visually clean opening and best rigidity score, but lower visibility / high radius error partly caused by ambiguity around the moving lid back edge and visible moving-part extent.
+  - VACE_Finetune: visibility `0.88`, max pivot drift `13.34 px`, max lid-tip motion `294.33 px`, mean radius error `1.11`, mean rigidity error `0.22`, angle change `110.75 deg`. Interpretation: visually very similar to VACE; small differences likely reflect manual annotation ambiguity/noise rather than reliable model separation.
+- Cross-model takeaway: WAN_Finetune is clearly better than base WAN by radius/rigidity metrics; VACE and VACE_Finetune are both visually strong and metric differences are likely within manual annotation noise. A careful slide should say the evaluator agrees with the broad visual trend but manual annotation variance limits fine-grained ranking.
+- Important limitation to state: semantic keypoint metrics depend on consistent part definitions. When the generated model changes apparent moving-part extent, especially the lid back edge, visibility/radius metrics may reflect annotation ambiguity rather than true physical failure.
+- Prompt-to-metric framing for toilet opening:
+  - Ideal prompt: "Open the toilet lid smoothly around its rear hinge while preserving lid rigidity, hinge attachment, and a static toilet base."
+  - Rear hinge rotation -> angle change + radius consistency.
+  - Rigid lid -> rigidity error.
+  - Stable base/hinge -> pivot drift.
+  - Visible/localized part -> visibility and visual/keypoint checks.
+- End goal framing: automatic verification and refinement pipeline for generated interaction videos:
+  generated candidates -> agent/vision model localizes object parts/keypoints/masks/contact -> ArticulationEval scores motion quality -> filter/rank/reject/refine -> keep high-quality samples for dataset construction and use failures for generation refinement or RL reward.
+- DeepEyes guidance from Hang on June 8: he said it would be great to show intermediate visual features like keypoints. Next direction is to run/train DeepEyes (ICLR'26 paper) and understand research progress about agentic training. He is training DeepEyesV2 with SFT under standard configuration; 6-hour LoRA SFT has not improved original Qwen2.5-VL-7B yet, and he is continuing.
+- DeepEyes interpretation for presentation/reply: Do not claim DeepEyes is integrated. Say current work is the verification layer; DeepEyes-style agent can become the localization/planning layer that outputs keypoints/masks, while ArticulationEval provides self-verification/reward/filtering. Full DeepEyes training is heavy (multi-GPU/Ray/Qwen judge etc.), so immediate next step is to run/evaluate the provided setup or study the repo and identify the adapter point from visual agent outputs to ArticulationEval inputs.
+- PhysX-Omni benchmark note: useful related framing for metric-first evaluation. It includes metrics such as RQS, MCS, DCS, DQS, APS, KPS, and MPS. KPS (Kinematic Plausibility Score) is closest conceptually. ArticulationEval can be framed as a lightweight video-interaction counterpart focused on generated human-articulated-object videos with keypoint evidence.
+- Candidate filtering/PASS-REVIEW-FAIL idea: It is simple weighted scoring, not ML, but still useful as a verification component. If used, present as a prototype Articulation Quality Score, not a final benchmark.
+
+June 9 presentation feedback:
+
+- Presentation went alright. Professor Cheng emphasized that future work needs specific numbers and a clear end goal, not vague descriptors.
+- He wants a formula/metric direction that can work across different articulated motion types. The key challenge is whether different motions (hinge rotation, drawer sliding/prismatic motion, knob rotation, etc.) can share a standard unified score rather than requiring unrelated metrics for each category.
+- Next research target should be a unified Articulation Quality Score with motion-type-specific expected transforms underneath. The score can be standard even if the motion model differs:
+  - infer/define moving part, base/anchor, and expected degree(s) of freedom;
+  - estimate observed keypoint/track motion;
+  - fit the best valid articulation transform for that motion type;
+  - score residuals normalized by object scale;
+  - combine with visibility, attachment/base stability, rigidity, and motion localization into one numeric score.
+- A possible end goal: a general verifier for generated articulated-object videos that outputs one interpretable score and failure breakdown:
+  `AQS = 100 - penalties(visibility, rigidity residual, articulation-model residual, attachment drift, motion leakage, temporal smoothness)`.
+- Continue DeepEyesV2 setup in parallel. DeepEyes can eventually automate part/keypoint/mask localization, while the unified score is the verification target/reward.
+- June 23 next-step decision: first validate the scoring math on synthetic keypoints rather than real generated video. Synthetic keypoints are generated by script, not manually annotated, and are used to separate two unknowns: whether the formula behaves correctly vs whether real-video keypoints/tracking are noisy. The current sandbox writes ignored outputs under `prototypes/articulation_eval/outputs/synthetic_articulation_sandbox/`.
+- Current unified-score prototype: `synthetic_articulation_sandbox.py` generates perfect and broken cases for hinge, slider, and simple rotation, then scores each case with shared components:
+  - `model_fit_error`: motion-type-specific residual. Hinge/rotation preserve radius around pivot/center; slider translates along one global axis.
+  - `rigidity_error`: moving-part pairwise distances should stay stable.
+  - `anchor_drift_error`: hinge/center anchors should stay stable when applicable.
+  - `total_error = model_fit_error + rigidity_error + anchor_drift_error`.
+  - `articulation_score = 100 * exp(-4 * total_error)`.
+- Verified sandbox output pattern: perfect hinge/slider/rotation score `100.0`; injected failures score lower, e.g. hinge pivot drift around `42`, hinge deformation around `33`, slider off-axis wobble around `41`, slider deformation around `54`, rotation drift/deformation around `59-60`. This is only a controlled validation step, not the final metric.
+- How to use the synthetic scores: treat them as a sanity check, not a final result. The current claim is only that the normalized residual idea distinguishes clean low-DOF articulation from injected failures under controlled keypoints. The breakdown is more important than the final score: hinge pivot drift gives high `anchor_drift_error`, hinge deformation gives high model/rigidity errors, slider wobble gives high slider model error, etc. Next step is to compare this breakdown against real toilet/video metrics and then refine the formula with literature and real annotations.
+- Current motion-type scope: v1 should focus on rigid articulated parts: hinge/pivot objects (toilet lid, cabinet/oven/microwave door), drawer/slider/prismatic motion, and simple rotation/knob-like motion. Flexible or deformable objects such as bendable lamp necks are future work because shape change may be valid rather than a failure.
+- Papers/knowledge direction for the unified score: do not begin by copying a complex formula. Start from geometry and model-fit residuals, then read papers to refine terminology/model fitting. Useful areas: revolute/prismatic robot kinematics, PartNet-Mobility style joint definitions, articulated-object model estimation from trajectories/point clouds, and later screw theory / product-of-exponentials if a more formal unified language is needed.
+
+Hang June 23/24 articulated reconstruction thread:
+
+- Hang said he is investigating reconstructing articulated objects from a single-view scene image. His first step is training an autoregressive model that sequentially reconstructs latent codes for each object part, then reconstructs each part's 3D mesh using a TRELLIS2 prior. Later he plans to explore RL for performance improvement and SFT with paired data from InfiniKin; he suggested pulling the git repo if time permits.
+- Interpretation: this is adjacent to, but not identical with, the current articulation-scoring work. Hang's thread is about single-image 3D part/mesh reconstruction; current ArticulationEval work is about evaluating articulated motion quality from keypoints/video. The conceptual overlap is part-level articulated object structure and possible future joint/plausibility evaluation, but do not force the metric work into his pipeline prematurely.
+- Safer framing if discussing with Hang: first understand the AR latent-code + TRELLIS2 reconstruction pipeline. Possible future bridge: after reconstructed parts/joints exist, an articulation plausibility score could validate whether the parts support plausible hinge/slider/rotation behavior or serve as a later reward/diagnostic. Treat that as a potential bridge, not the immediate main task.
+
+DeepEyesV2 setup/debug status:
+
+- Downloaded checkpoint target: `honglyhly/DeepEyesV2_7B_1031`.
+- Rorqual checkpoint path used: `/project/rrg-vislearn/kini1409/models/deepeyes/DeepEyesV2_7B_1031`.
+- Existing `image-editing` env became unreliable for DeepEyes inference. `transformers==5.10.2` was incompatible with `torch==2.4.1` because Transformers tried to access `torch.float8_e8m0fnu`. Downgrading to `transformers==4.51.3` fixed that specific mismatch, but later `import torch` appeared to hang on the compute node in this env.
+- Rorqual interactive debugging lessons:
+  - Run DeepEyes only on a GPU allocation where `nvidia-smi` works.
+  - Login nodes such as `rorqual1/3/4` do not expose the GPU.
+  - Use `python -u ... 2>&1 | tee deepeyes_infer.log` for live logs.
+  - Use `sbatch` for long runs instead of babysitting `salloc`.
+  - If `nvidia-smi` shows `0MiB` for many minutes and log is empty, the script has not reached GPU/model placement.
+- Added cluster helper scripts under `prototypes/articulation_eval/cluster/`:
+  - `setup_deepeyes_env.sh`: creates clean `/project/rrg-vislearn/kini1409/envs/deepeyes` and installs a DeepEyes/Qwen-VL inference stack.
+  - `test_deepeyes_imports.py`: prints import/CUDA progress.
+  - `test_deepeyes_infer.py`: runs one toilet-frame inference with progress logs.
+  - `run_deepeyes_infer.sbatch`: 2-hour GPU batch job with logs under `/project/rrg-vislearn/kini1409/logs/`.
+- Next DeepEyes action: copy/sync the repo scripts to Rorqual, run `setup_deepeyes_env.sh` inside `tmux`, then submit `run_deepeyes_infer.sbatch`. Keep the manual keypoint annotations as the future answer key for DeepEyes localization validation.
+- Vulcan worked much better than Rorqual for DeepEyes inference. Vulcan project path used: `~/projects/aip-vislearn/kini1409`; env: `envs/deepeyes-vulcan`; model path: `models/deepeyes/DeepEyesV2_7B_1031`. Inside a Vulcan GPU allocation, `torch 2.12.0` reported CUDA true on an NVIDIA L40S and the model loaded successfully.
+- DeepEyesV2 inference result: on a toilet keypoint-overlay frame, the model loaded all 7 checkpoint shards in about 39 seconds, recognized labels such as `lid_back_center`, `hinge_midpoint`, and `lid_front_tip`, and explained that the hinge midpoint is the pivot region. Important caveat: this only shows the model can interpret an already-labeled overlay frame; it does not prove automatic keypoint discovery from raw video.
+- DeepEyes validation mini-set: user built about 27 images / 31 questions across small text, counting, object-text, spatial, chart/table, and confusion-matrix tasks. Results comparing DeepEyesV2 final vs SFT:
+  - Overall: final `22/31` (`71.0%`), SFT `21/31` (`67.7%`).
+  - Small text: both `9/10`.
+  - Counting: final `2/5`, SFT `1/5`.
+  - Object-text: final `3/3`, SFT `2/3`.
+  - Spatial: both `5/5`.
+  - Chart/table: final `3/7`, SFT `4/7`.
+  - Confusion matrix: both `0/1`.
+- DeepEyes validation interpretation: final model narrowly wins overall, SFT is better on chart/table reading, both struggle with counting and confusion-matrix questions. Dataset is small, so use this only as a preliminary model sanity check and error-analysis seed, not a strong benchmark claim.
+- DeepEyes relationship to current work: keep it as the future automation/perception layer. Manual keypoints and synthetic keypoints are the answer key / scoring validation; DeepEyes or another agent could later localize keypoints/masks automatically, and ArticulationEval/unified score could act as verifier or reward.

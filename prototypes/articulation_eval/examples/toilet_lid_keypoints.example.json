@@ -1,0 +1,64 @@
+{
+  "case_name": "toy_toilet_lid_side_view",
+  "motion_type": "hinge_rotation",
+  "video": "case_toilet1_0/input.mp4",
+  "keypoint_order": [
+    "back_pivot",
+    "lid_front_tip",
+    "lid_midpoint",
+    "lid_back_edge",
+    "lid_front_edge_mid"
+  ],
+  "frames": [
+    {
+      "frame_idx": 0,
+      "points": {
+        "back_pivot": [190, 260],
+        "lid_front_tip": [610, 210],
+        "lid_midpoint": [400, 235],
+        "lid_back_edge": [240, 255],
+        "lid_front_edge_mid": [520, 220]
+      }
+    },
+    {
+      "frame_idx": 52,
+      "points": {
+        "back_pivot": [192, 260],
+        "lid_front_tip": [610, 185],
+        "lid_midpoint": [400, 218],
+        "lid_back_edge": [242, 254],
+        "lid_front_edge_mid": [520, 198]
+      }
+    },
+    {
+      "frame_idx": 60,
+      "points": {
+        "back_pivot": [193, 261],
+        "lid_front_tip": [605, 160],
+        "lid_midpoint": [397, 203],
+        "lid_back_edge": [244, 253],
+        "lid_front_edge_mid": [515, 176]
+      }
+    },
+    {
+      "frame_idx": 70,
+      "points": {
+        "back_pivot": [194, 261],
+        "lid_front_tip": [595, 135],
+        "lid_midpoint": [390, 185],
+        "lid_back_edge": [246, 252],
+        "lid_front_edge_mid": [505, 152]
+      }
+    },
+    {
+      "frame_idx": 80,
+      "points": {
+        "back_pivot": [194, 262],
+        "lid_front_tip": [582, 118],
+        "lid_midpoint": [382, 170],
+        "lid_back_edge": [248, 251],
+        "lid_front_edge_mid": [492, 135]
+      }
+    }
+  ]
+}
